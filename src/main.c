@@ -1,5 +1,34 @@
 #include <gtk/gtk.h>
 
+static char *get_text(GtkTextView *text_view) {
+//static void encode(GtkTextView *text_view) {
+    int length;
+    gchar *plaintext; 
+    GtkTextIter start, end;
+    GtkTextBuffer *buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_view));
+    gtk_text_buffer_get_bounds(buffer, &start, &end);
+
+    plaintext = gtk_text_buffer_get_text(buffer, &start, &end, FALSE);
+    printf("\n\n");
+    length = 0;
+    while(plaintext[length])
+        printf("%i", plaintext[length]);
+    printf("\n");
+    //length = length(gtk_text_buffer);
+    //while (length%3 != 0) {
+    //    text buffer + 1 zero;}
+}
+
+
+static void encode(GtkButton *button, gpointer *data) {
+    printf("fuck my life\n");
+}
+
+
+//static char *get_salt() {
+//
+//}
+
 static void activate(GtkApplication* app, gpointer user_data) {
     int i, x, y;
     unsigned int seed;
@@ -9,7 +38,7 @@ static void activate(GtkApplication* app, gpointer user_data) {
     
     GtkWidget *window;
     GtkWidget *grid;
-    GtkWidget *plaintext;
+    GtkWidget *text_view;
     GtkWidget *key;
     GtkWidget *button_box;
     GtkWidget *button;
@@ -28,9 +57,9 @@ static void activate(GtkApplication* app, gpointer user_data) {
     gtk_grid_set_column_spacing(GTK_GRID(grid), 3);
     gtk_container_add(GTK_CONTAINER(window), grid);
 
-    plaintext = gtk_text_view_new();
-    gtk_text_view_set_editable(GTK_TEXT_VIEW(plaintext), 1);
-    gtk_grid_attach(GTK_GRID(grid), plaintext, 0, 0, 2, 1);
+    text_view = gtk_text_view_new();
+    gtk_text_view_set_editable(GTK_TEXT_VIEW(text_view), 1);
+    gtk_grid_attach(GTK_GRID(grid), text_view, 0, 0, 2, 1);
 
     key = gtk_entry_new();
     gtk_grid_attach(GTK_GRID(grid), key, 0, 1, 1, 1);
@@ -40,11 +69,14 @@ static void activate(GtkApplication* app, gpointer user_data) {
 
     button = gtk_button_new_with_label("Encode");
     gtk_container_add(GTK_CONTAINER(button_box), button);
+    g_signal_connect(G_OBJECT(button), "clicked", G_CALLBACK(encode), NULL);
 
     //gtk_override_background_color(GTK_WIDGET(cells[0]), GTK_STATE_FLAG_NORMAL,
 
     output_grid = gtk_grid_new();
-    //gtk_grid_set_column_spacing(GTK_GRID(grid), 2);
+    gtk_grid_set_column_spacing(GTK_GRID(grid), 2);
+    gtk_grid_set_column_homogeneous(GTK_GRID(output_grid), 1);
+    gtk_grid_set_row_homogeneous(GTK_GRID(output_grid), 1);
     for (i=0; i<CELLS; i++) {
         cells[i] = gtk_label_new("██");
     }
@@ -60,9 +92,6 @@ static void activate(GtkApplication* app, gpointer user_data) {
     gtk_grid_attach(GTK_GRID(grid), output_grid, 0, 2, 2, 1);
 
     gtk_widget_show_all(window);
-}
-
-void encode() {
 }
 
 
