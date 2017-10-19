@@ -1,33 +1,35 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include <gtk/gtk.h>
 
-static char *get_text(GtkTextView *text_view) {
-//static void encode(GtkTextView *text_view) {
-    int length;
-    gchar *plaintext; 
-    GtkTextIter start, end;
-    GtkTextBuffer *buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_view));
-    gtk_text_buffer_get_bounds(buffer, &start, &end);
+struct passed_widgets {
+    GtkWidget *text_view;
+    GtkWidget *entry;
+};
 
-    plaintext = gtk_text_buffer_get_text(buffer, &start, &end, FALSE);
-    printf("\n\n");
-    length = 0;
-    while(plaintext[length])
-        printf("%i", plaintext[length]);
-    printf("\n");
-    //length = length(gtk_text_buffer);
-    //while (length%3 != 0) {
-    //    text buffer + 1 zero;}
+gpointer make_data(GtkWidget *tv, GtkWidget *ent) {
+    struct passed_widgets *pw = malloc(sizeof(struct passed_widgets));
+    pw -> text_view = tv;
+    pw -> entry = ent;
+    return (gpointer) pw;
 }
 
 
 static void encode(GtkButton *button, gpointer *data) {
-    printf("fuck my life\n");
+    g_print("encoding initiated\n");
+    //g_print("%s", data);
+    gchar *plaintext;
+    GtkTextIter start, end;
+    GtkTextBuffer *buffer;
+
+    //buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(data -> text_view));
+    //gtk_text_buffer_get_bounds(buffer, &start, &end);
+    //plaintext = gtk_text_buffer_get_text(buffer, &start, &end, FALSE);
+    //g_print("%s", plaintext);
+
+    // DON'T FORGET TO free()
 }
 
-
-//static char *get_salt() {
-//
-//}
 
 static void activate(GtkApplication* app, gpointer user_data) {
     int i, x, y;
@@ -35,7 +37,7 @@ static void activate(GtkApplication* app, gpointer user_data) {
     const int CELLS = 40;
     char alphabet[37] = {'a','b','c','d','e','f','g','h','i','j','k','l','m',
         'n','o','p','q','r','s','t','u','v','w','x','y','x','.',',','?','!',' '};
-    
+
     GtkWidget *window;
     GtkWidget *grid;
     GtkWidget *text_view;
@@ -45,6 +47,9 @@ static void activate(GtkApplication* app, gpointer user_data) {
     GtkWidget *output_grid;
     GtkWidget *output;
     GtkWidget *cells[CELLS];
+
+    // in gdb: explore (struct passed_widgets *) TEST
+    gpointer TEST;
 
     window = gtk_application_window_new(app);
     gtk_window_set_title(GTK_WINDOW(window), "Colta");
@@ -69,7 +74,17 @@ static void activate(GtkApplication* app, gpointer user_data) {
 
     button = gtk_button_new_with_label("Encode");
     gtk_container_add(GTK_CONTAINER(button_box), button);
-    g_signal_connect(G_OBJECT(button), "clicked", G_CALLBACK(encode), NULL);
+    
+    TEST = make_data(text_view, key);
+
+    g_signal_connect(
+            G_OBJECT(button),
+            "clicked",
+            G_CALLBACK(encode),
+            make_data(text_view, key)
+            //make_data(GTK_TEXT_VIEW(text_view), GTK_ENTRY(key))
+            //(gpointer) "hi faggot\n"
+    );
 
     //gtk_override_background_color(GTK_WIDGET(cells[0]), GTK_STATE_FLAG_NORMAL,
 
@@ -107,6 +122,27 @@ int main(int argc, char **argv) {
 
     return status;
 }
+
+
+// static char *get_text(GtkTextView *text_view) {
+// //static void encode(GtkTextView *text_view) {
+//     int length;
+//     gchar *plaintext;
+//     GtkTextIter start, end;
+//     GtkTextBuffer *buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_view));
+//     gtk_text_buffer_get_bounds(buffer, &start, &end);
+// 
+//     plaintext = gtk_text_buffer_get_text(buffer, &start, &end, FALSE);
+//     printf("\n\n");
+//     length = 0;
+//     printf("%s", plaintext[length]);
+//     while(plaintext[length])
+//         printf("%i", plaintext[length]);
+//     printf("\n");
+//     //length = length(gtk_text_buffer);
+//     //while (length%3 != 0) {
+//     //    text buffer + 1 zero;}
+// }
 
 // 255 characters = 4 rows 10 columns of colors
 // seed between 0 to 4'294'967'295
