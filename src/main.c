@@ -17,15 +17,17 @@ gpointer make_data(GtkWidget *tv, GtkWidget *ent) {
 
 static void encode(GtkButton *button, gpointer *data) {
     g_print("encoding initiated\n");
-    //g_print("%s", data);
     gchar *plaintext;
     GtkTextIter start, end;
     GtkTextBuffer *buffer;
+    struct passed_widgets *pw = (struct passed_widgets *) data;
+    buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(pw -> text_view));
+    //GtkEntry *key = GTK_ENTRY((struct passed_widgets *) data
 
-    //buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(data -> text_view));
-    //gtk_text_buffer_get_bounds(buffer, &start, &end);
-    //plaintext = gtk_text_buffer_get_text(buffer, &start, &end, FALSE);
-    //g_print("%s", plaintext);
+
+    gtk_text_buffer_get_bounds(buffer, &start, &end);
+    plaintext = gtk_text_buffer_get_text(buffer, &start, &end, FALSE);
+    g_print("text_view contents: %s\n", plaintext);
 
     // DON'T FORGET TO free()
 }
