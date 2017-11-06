@@ -2,10 +2,24 @@
 #include <stdlib.h>
 #include <gtk/gtk.h>
 
+#define LETTERS 31
+#define CELLS 40
+#define CAPACITY 122
+#define TWO_TENS 256
+#define FOUR_TENS 65536
+
+const gchar ALPHABET[LETTERS] = 
+    {'a','b','c','d','e','f','g','h','i','j','k', 'l','m', 'n','o','p','q','r',
+     's','t','u','v','w','x','y','z','.',',','?','!',' '};
+const int DEFAULT_CODE[LETTERS] =
+    {7,14,21,28,35,42,49,56,63,70,77,84,91,98,105,112,119,
+     126,133,140,147,154,161,168,175,182,189,196,203,210,217};
+
 struct passed_widgets {
     GtkWidget *text_view;
     GtkWidget *entry;
 };
+
 
 gpointer make_data(GtkWidget *tv, GtkWidget *ent) {
     struct passed_widgets *pw = malloc(sizeof(struct passed_widgets));
@@ -15,20 +29,96 @@ gpointer make_data(GtkWidget *tv, GtkWidget *ent) {
 }
 
 
+int *make_triplets(gchar str[]) {
+    int start, i, j, k=0;
+    int temp[CAPACITY];
+    static int triplets[CELLS];
+
+    printf("        str = %s\n", str);
+
+    for (i = 0; str[i] != '\0'; i++) {
+        for (j = 0; str[i] != ALPHABET[j]; j++);
+            //printf("        str[%i] = %c; ALPHABET[%i] = %c\n", i, str[i], j, ALPHABET[j]);
+        printf("        DEFAULT_CODE[%i] = 0x%x\n", j, DEFAULT_CODE[j]);
+        temp[i] = DEFAULT_CODE[j];
+        printf("    temp[%i] = %i\n", i, temp[i]);
+    }
+
+    if (i % 3 == 2)
+        temp[i++] = DEFAULT_CODE[30];
+
+    if (i % 3 == 1) {
+        temp[i++] = DEFAULT_CODE[30];
+        temp[i] = DEFAULT_CODE[30];
+    }
+
+    // сделать счетчик количества символов, делать что-то если кол-во не равно трем
+
+    for (start = 0; start < i; start+=3) {
+        triplets[k] = temp[start]*FOUR_TENS + temp[start+1]*TWO_TENS + temp[start+2];
+        //printf("    1/ triplets[%i] = %x\n", k, triplets[k]);
+        k++;
+    }
+    // умножать на 256 и складывать по разрядам
+    return triplets;
+}
+
+
+gchar *strip_string(gchar str[]) {
+    int i, j, k = 0;
+    static gchar cleantext[CAPACITY];
+    //printf("      iterating through the raw string\n");
+    for (i = 0; str[i] != '\0'; i++) {
+        //printf("         str[%i] = %c\n", i, str[i]);
+        for (j = 0; str[i] != ALPHABET[j] && j < LETTERS; j++);
+        //printf("         j=%i;\n", j);
+        if (j == LETTERS) {
+            //printf("      dropping unknown character\n");
+            continue;
+        }
+        else {
+            //printf("      match found: %c\n", ALPHABET[j]);
+            cleantext[k] = ALPHABET[j];
+            k++;
+        }
+    }
+    cleantext[k] = '\0';
+    //printf("     cleantext is:%s\n", cleantext);
+    return cleantext;
+}
+
+
 static void encode(GtkButton *button, gpointer *data) {
-    g_print("encoding initiated\n");
+    printf("encoding initiated:\n");
+
+    int k = 0;
+    int *triplets;
     gchar *plaintext;
+    gchar *key;
     GtkTextIter start, end;
-    GtkTextBuffer *buffer;
-    struct passed_widgets *pw = (struct passed_widgets *) data;
-    buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(pw -> text_view));
-    //GtkEntry *key = GTK_ENTRY((struct passed_widgets *) data
+    GtkTextBuffer *txt_buf;
+    GtkEntryBuffer *ent_buf;
+    struct passed_widgets *pw;
+    
+    pw = (struct passed_widgets *) data;
+    
+    txt_buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(pw -> text_view));
+    gtk_text_buffer_get_bounds(txt_buf, &start, &end);
+    plaintext = gtk_text_buffer_get_text(txt_buf, &start, &end, FALSE);
+    printf("   plaintext contents: %s\n", plaintext);
+    
+    ent_buf = gtk_entry_get_buffer(GTK_ENTRY(pw -> entry));
+    key = gtk_entry_buffer_get_text(ent_buf);
+    printf("   key contents: %s\n", key);
 
-
-    gtk_text_buffer_get_bounds(buffer, &start, &end);
-    plaintext = gtk_text_buffer_get_text(buffer, &start, &end, FALSE);
-    g_print("text_view contents: %s\n", plaintext);
-
+    triplets = make_triplets(strip_string(plaintext));
+    for (int i = 0; i<4; i++) {
+        for (int j = 0; j<10; j++) {
+            printf("[%02i]:%06x ", k, triplets[k]);
+            k++;
+        }
+        printf("\n");
+    }
     // DON'T FORGET TO free()
 }
 
@@ -36,22 +126,16 @@ static void encode(GtkButton *button, gpointer *data) {
 static void activate(GtkApplication* app, gpointer user_data) {
     int i, x, y;
     unsigned int seed;
-    const int CELLS = 40;
-    char alphabet[37] = {'a','b','c','d','e','f','g','h','i','j','k','l','m',
-        'n','o','p','q','r','s','t','u','v','w','x','y','x','.',',','?','!',' '};
 
     GtkWidget *window;
     GtkWidget *grid;
-    GtkWidget *text_view;
+    GtkWidget *plaintext;
     GtkWidget *key;
     GtkWidget *button_box;
     GtkWidget *button;
     GtkWidget *output_grid;
     GtkWidget *output;
     GtkWidget *cells[CELLS];
-
-    // in gdb: explore (struct passed_widgets *) TEST
-    gpointer TEST;
 
     window = gtk_application_window_new(app);
     gtk_window_set_title(GTK_WINDOW(window), "Colta");
@@ -64,9 +148,10 @@ static void activate(GtkApplication* app, gpointer user_data) {
     gtk_grid_set_column_spacing(GTK_GRID(grid), 3);
     gtk_container_add(GTK_CONTAINER(window), grid);
 
-    text_view = gtk_text_view_new();
-    gtk_text_view_set_editable(GTK_TEXT_VIEW(text_view), 1);
-    gtk_grid_attach(GTK_GRID(grid), text_view, 0, 0, 2, 1);
+    plaintext = gtk_text_view_new();
+    gtk_text_view_set_editable(GTK_TEXT_VIEW(plaintext), 1);
+    gtk_text_view_set_accepts_tab(GTK_TEXT_VIEW(plaintext), 0);
+    gtk_grid_attach(GTK_GRID(grid), plaintext, 0, 0, 2, 1);
 
     key = gtk_entry_new();
     gtk_grid_attach(GTK_GRID(grid), key, 0, 1, 1, 1);
@@ -76,16 +161,12 @@ static void activate(GtkApplication* app, gpointer user_data) {
 
     button = gtk_button_new_with_label("Encode");
     gtk_container_add(GTK_CONTAINER(button_box), button);
-    
-    TEST = make_data(text_view, key);
 
     g_signal_connect(
             G_OBJECT(button),
             "clicked",
             G_CALLBACK(encode),
-            make_data(text_view, key)
-            //make_data(GTK_TEXT_VIEW(text_view), GTK_ENTRY(key))
-            //(gpointer) "hi faggot\n"
+            make_data(plaintext, key)
     );
 
     //gtk_override_background_color(GTK_WIDGET(cells[0]), GTK_STATE_FLAG_NORMAL,
@@ -124,27 +205,6 @@ int main(int argc, char **argv) {
 
     return status;
 }
-
-
-// static char *get_text(GtkTextView *text_view) {
-// //static void encode(GtkTextView *text_view) {
-//     int length;
-//     gchar *plaintext;
-//     GtkTextIter start, end;
-//     GtkTextBuffer *buffer = gtk_text_view_get_buffer(GTK_TEXT_VIEW(text_view));
-//     gtk_text_buffer_get_bounds(buffer, &start, &end);
-// 
-//     plaintext = gtk_text_buffer_get_text(buffer, &start, &end, FALSE);
-//     printf("\n\n");
-//     length = 0;
-//     printf("%s", plaintext[length]);
-//     while(plaintext[length])
-//         printf("%i", plaintext[length]);
-//     printf("\n");
-//     //length = length(gtk_text_buffer);
-//     //while (length%3 != 0) {
-//     //    text buffer + 1 zero;}
-// }
 
 // 255 characters = 4 rows 10 columns of colors
 // seed between 0 to 4'294'967'295
