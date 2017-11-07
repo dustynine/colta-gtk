@@ -16,16 +16,16 @@ const int DEFAULT_CODE[LETTERS] =
      126,133,140,147,154,161,168,175,182,189,196,203,210,217};
 
 struct passed_widgets {
-    GtkWidget *text_view;
-    GtkWidget *entry;
+    GtkWidget *plaintext;
+    GtkWidget *key;
 };
 
 
-gpointer make_data(GtkWidget *tv, GtkWidget *ent) {
-    struct passed_widgets *pw = malloc(sizeof(struct passed_widgets));
-    pw -> text_view = tv;
-    pw -> entry = ent;
-    return (gpointer) pw;
+gpointer make_data(GtkWidget *text, GtkWidget *key) {
+    static struct passed_widgets pw;
+    pw.plaintext = text;
+    pw.key = key;
+    return (gpointer) &pw;
 }
 
 
@@ -102,12 +102,12 @@ static void encode(GtkButton *button, gpointer *data) {
     
     pw = (struct passed_widgets *) data;
     
-    txt_buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(pw -> text_view));
+    txt_buf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(pw -> plaintext));
     gtk_text_buffer_get_bounds(txt_buf, &start, &end);
     plaintext = gtk_text_buffer_get_text(txt_buf, &start, &end, FALSE);
     printf("   plaintext contents: %s\n", plaintext);
     
-    ent_buf = gtk_entry_get_buffer(GTK_ENTRY(pw -> entry));
+    ent_buf = gtk_entry_get_buffer(GTK_ENTRY(pw -> key));
     key = gtk_entry_buffer_get_text(ent_buf);
     printf("   key contents: %s\n", key);
 
@@ -119,7 +119,6 @@ static void encode(GtkButton *button, gpointer *data) {
         }
         printf("\n");
     }
-    // DON'T FORGET TO free()
 }
 
 
