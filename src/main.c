@@ -33,15 +33,6 @@ struct passed_widgets {
 };
 
 
-//gpointer make_data(GtkWidget *text, GtkWidget *key, GtkWidget *cells[CELLS]) {
-//    static struct passed_widgets pw;
-//    pw.plaintext = text;
-//    pw.key = key;
-//    pw.cls = cells;
-//    return &pw;
-//}
-
-
 int *make_triplets(gchar str[]) {
     int start, i, j, k=0;
     int temp[CAPACITY];
@@ -105,7 +96,6 @@ static void encode(GtkButton *button, gpointer data) {
     printf("pw address: %p\n", pw);
     printf("*pw address: %p\n", *pw);
     printf("pw -> plaintext address: %p\n", pw -> plaintext);
-    printf("pw.plaintext address: %p", *(pw) -> plaintext);
     //plaintext = gtk_entry_get_text(GTK_ENTRY(pw -> plaintext));
     //printf("   plaintext contents: %s\n", plaintext);
 
@@ -131,7 +121,7 @@ static void encode(GtkButton *button, gpointer data) {
 static void activate(GtkApplication* app, gpointer user_data) {
     int i, x, y;
     unsigned int seed;
-    struct template gui;
+    static struct template gui;
 
     gui.window = gtk_application_window_new(app);
     gtk_window_set_title(GTK_WINDOW(gui.window), "Colta");
