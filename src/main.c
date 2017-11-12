@@ -26,21 +26,6 @@ struct template {
     GtkWidget *cells[CELLS];
 };
 
-struct passed_widgets {
-    GtkWidget *plaintext;
-    GtkWidget *key;
-    GtkWidget **cls;
-};
-
-
-//gpointer make_data(GtkWidget *text, GtkWidget *key, GtkWidget *cells[CELLS]) {
-//    static struct passed_widgets pw;
-//    pw.plaintext = text;
-//    pw.key = key;
-//    pw.cls = cells;
-//    return &pw;
-//}
-
 
 int *make_triplets(gchar str[]) {
     int start, i, j, k=0;
@@ -101,37 +86,31 @@ static void encode(GtkButton *button, gpointer data) {
 
     pw = (struct template *) data;
     
-    printf("data address: %p\n", (struct template *)data);
-    printf("pw address: %p\n", pw);
-    printf("*pw address: %p\n", *pw);
-    printf("pw -> plaintext address: %p\n", pw -> plaintext);
-    printf("pw.plaintext address: %p", *(pw) -> plaintext);
-    //plaintext = gtk_entry_get_text(GTK_ENTRY(pw -> plaintext));
-    //printf("   plaintext contents: %s\n", plaintext);
+    plaintext = gtk_entry_get_text(GTK_ENTRY(pw -> plaintext));
+    printf("    plaintext contents: %s\n", plaintext);
 
-    //key = gtk_entry_buffer_get_text(gtk_entry_get_buffer(GTK_ENTRY(&(pw -> key))));
-    //gtk_entry_set_buffer(GTK_ENTRY(pw -> key),gtk_entry_get_buffer(GTK_ENTRY(pw -> plaintext)));
-    //printf("   key contents: %s\n", key);
+    key = gtk_entry_get_text(GTK_ENTRY(pw -> key));
+    printf("    key contents: %s\n", key);
 
-    //triplets = make_triplets(strip_string(plaintext));
-    //for (int i = 0; i<4; i++) {
-    //    for (int j = 0; j<10; j++) {
-    //        printf("[%02i]:%06x ", k, triplets[k]);
-    //        k++;
-    //    }
-    //    printf("\n");
-    //}
+    triplets = make_triplets(strip_string(plaintext));
+    for (int i = 0; i<4; i++) {
+        for (int j = 0; j<10; j++) {
+            printf("[%02i]:%06x ", k, triplets[k]);
+            k++;
+        }
+        printf("\n");
+    }
 
-    //GdkColor color;
-    //gdk_color_parse("#07d9d9", &color);
-    //gtk_widget_modify_fg(GTK_WIDGET(pw -> cells), GTK_STATE_NORMAL, &color);
+    GdkColor color;
+    gdk_color_parse("#000000", &color);
+    gtk_widget_modify_fg(GTK_WIDGET(pw -> cells[0]), GTK_STATE_NORMAL, &color);
 }
 
 
 static void activate(GtkApplication* app, gpointer user_data) {
     int i, x, y;
     unsigned int seed;
-    struct template gui;
+    static struct template gui;
 
     gui.window = gtk_application_window_new(app);
     gtk_window_set_title(GTK_WINDOW(gui.window), "Colta");
@@ -177,11 +156,8 @@ static void activate(GtkApplication* app, gpointer user_data) {
             "clicked",
             G_CALLBACK(encode),
             &gui
-            //make_data(gui.plaintext, gui.key, gui.cells)
     );
 
-    printf("gui address: %p\n", gui);
-    printf("&gui address: %p\n", &gui);
     gtk_widget_show_all(gui.window);
 }
 
