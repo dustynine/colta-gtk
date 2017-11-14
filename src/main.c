@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include <stdlib.h>
 #include <gtk/gtk.h>
 
 #define LETTERS 31
@@ -8,11 +7,14 @@
 #define TWO_TENS 256
 #define FOUR_TENS 65536
 
-const gchar ALPHABET[LETTERS] =
+const char ALPHABET[LETTERS] =
     {'a','b','c','d','e','f','g','h','i','j','k', 'l','m', 'n','o','p','q','r',
      's','t','u','v','w','x','y','z','.',',','?','!',' '};
 const int DEFAULT_CODE[LETTERS] =
     {7,14,21,28,35,42,49,56,63,70,77,84,91,98,105,112,119,
+     126,133,140,147,154,161,168,175,182,189,196,203,210,217};
+const int MOD_CODE[LETTERS] =
+    {255,255,255,28,35,42,49,56,63,70,77,84,91,98,105,112,119,
      126,133,140,147,154,161,168,175,182,189,196,203,210,217};
 
 struct template {
@@ -27,26 +29,46 @@ struct template {
 };
 
 
-int *make_triplets(gchar str[]) {
+int *make_code(char key[]) {
+    int code[LETTERS];
+    int seed = atoi(key);
+    srand(seed);
+    for (int i = 0; i < LETTERS; i++)
+        code[i] = rand() & 0xff;
+    return code;
+}
+
+
+int *make_triplets(char str[], char key[]) {
     int start, i, j, k=0;
     int temp[CAPACITY];
+    int code[LETTERS];
     static int triplets[CELLS];
 
-    printf("        str = %s\n", str);
-
-    for (i = 0; str[i] != '\0'; i++) {
-        for (j = 0; str[i] != ALPHABET[j]; j++);
-        printf("        DEFAULT_CODE[%i] = 0x%x\n", j, DEFAULT_CODE[j]);
-        temp[i] = DEFAULT_CODE[j];
-        printf("    temp[%i] = %i\n", i, temp[i]);
+    if (key[0] == '\0') {
+        for (i = 0; str[i] != '\0'; i++) {
+            for (j = 0; str[i] != ALPHABET[j]; j++);
+            printf("        DEFAULT_CODE[%i] = 0x%x\n", j, DEFAULT_CODE[j]);
+            temp[i] = DEFAULT_CODE[j];
+            //printf("    temp[%i] = %i\n", i, temp[i]);
+        }
+    }
+    else {
+        code = make_code(key);
+        for (i = 0; str[i] != '\0'; i++) {
+            for (j = 0; str[i] != ALPHABET[j]; j++);
+            printf("        code[%i] = 0x%x\n", j, code[j]);
+            temp[i] = code[j];
+            //printf("    temp[%i] = %i\n", i, temp[i]);
+        }
     }
 
     if (i % 3 == 2)
-        temp[i++] = DEFAULT_CODE[30];
+        temp[i++] = 0;
 
     if (i % 3 == 1) {
-        temp[i++] = DEFAULT_CODE[30];
-        temp[i] = DEFAULT_CODE[30];
+        temp[i++] = 0;
+        temp[i] = 0;
     }
 
     for (start = 0; start < i; start+=3) {
@@ -57,9 +79,9 @@ int *make_triplets(gchar str[]) {
 }
 
 
-gchar *strip_string(gchar str[]) {
+char *strip_string(char str[]) {
     int i, j, k = 0;
-    static gchar cleantext[CAPACITY];
+    static char cleantext[CAPACITY];
     for (i = 0; str[i] != '\0'; i++) {
         for (j = 0; str[i] != ALPHABET[j] && j < LETTERS; j++);
         if (j == LETTERS) {
@@ -80,8 +102,10 @@ static void encode(GtkButton *button, gpointer data) {
 
     int k = 0;
     int *triplets;
-    gchar *plaintext;
-    gchar *key;
+    char *plaintext;
+    char *key;
+    char temp_str[8];
+    GdkColor color;
     struct template *pw;
 
     pw = (struct template *) data;
@@ -92,7 +116,7 @@ static void encode(GtkButton *button, gpointer data) {
     key = gtk_entry_get_text(GTK_ENTRY(pw -> key));
     printf("    key contents: %s\n", key);
 
-    triplets = make_triplets(strip_string(plaintext));
+    triplets = make_triplets(strip_string(plaintext), key);
     for (int i = 0; i<4; i++) {
         for (int j = 0; j<10; j++) {
             printf("[%02i]:%06x ", k, triplets[k]);
@@ -101,15 +125,19 @@ static void encode(GtkButton *button, gpointer data) {
         printf("\n");
     }
 
-    GdkColor color;
-    gdk_color_parse("#000000", &color);
-    gtk_widget_modify_fg(GTK_WIDGET(pw -> cells[0]), GTK_STATE_NORMAL, &color);
+    for (int i = 0; i < CELLS; i++) {
+        snprintf(temp_str, 8, "#%06x", triplets[i]);
+        gdk_color_parse(temp_str, &color);
+        gtk_widget_modify_fg(GTK_WIDGET(pw -> cells[i]), GTK_STATE_NORMAL, &color);
+    }
+
+    for (int i = 0; i < CELLS; i++)
+        triplets[i] = 0;
 }
 
 
 static void activate(GtkApplication* app, gpointer user_data) {
     int i, x, y;
-    unsigned int seed;
     static struct template gui;
 
     gui.window = gtk_application_window_new(app);
@@ -121,10 +149,11 @@ static void activate(GtkApplication* app, gpointer user_data) {
     gtk_container_add(GTK_CONTAINER(gui.window), gui.grid);
 
     gui.plaintext = gtk_entry_new();
+    gtk_entry_set_placeholder_text(GTK_ENTRY(gui.plaintext), "Text (a-z .,!?, 120 characters maximum)");
     gtk_grid_attach(GTK_GRID(gui.grid), gui.plaintext, 0, 0, 2, 1);
-    printf("gui.plaintext address: %p\n", gui.plaintext);
 
     gui.key = gtk_entry_new();
+    gtk_entry_set_placeholder_text(GTK_ENTRY(gui.key), "Key (optional) (0-4`294`967`295)");
     gtk_grid_attach(GTK_GRID(gui.grid), gui.key, 0, 1, 1, 1);
 
     gui.button_box = gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
