@@ -13,9 +13,6 @@ const char ALPHABET[LETTERS] =
 const int DEFAULT_CODE[LETTERS] =
     {7,14,21,28,35,42,49,56,63,70,77,84,91,98,105,112,119,
      126,133,140,147,154,161,168,175,182,189,196,203,210,217};
-const int MOD_CODE[LETTERS] =
-    {255,255,255,28,35,42,49,56,63,70,77,84,91,98,105,112,119,
-     126,133,140,147,154,161,168,175,182,189,196,203,210,217};
 
 struct template {
     GtkWidget *window;
@@ -29,38 +26,16 @@ struct template {
 };
 
 
-int *make_code(char key[]) {
-    int code[LETTERS];
-    int seed = atoi(key);
-    srand(seed);
-    for (int i = 0; i < LETTERS; i++)
-        code[i] = rand() & 0xff;
-    return code;
-}
-
-
 int *make_triplets(char str[], char key[]) {
     int start, i, j, k=0;
     int temp[CAPACITY];
     int code[LETTERS];
     static int triplets[CELLS];
 
-    if (key[0] == '\0') {
-        for (i = 0; str[i] != '\0'; i++) {
-            for (j = 0; str[i] != ALPHABET[j]; j++);
-            printf("        DEFAULT_CODE[%i] = 0x%x\n", j, DEFAULT_CODE[j]);
-            temp[i] = DEFAULT_CODE[j];
-            //printf("    temp[%i] = %i\n", i, temp[i]);
-        }
-    }
-    else {
-        code = make_code(key);
-        for (i = 0; str[i] != '\0'; i++) {
-            for (j = 0; str[i] != ALPHABET[j]; j++);
-            printf("        code[%i] = 0x%x\n", j, code[j]);
-            temp[i] = code[j];
-            //printf("    temp[%i] = %i\n", i, temp[i]);
-        }
+    for (i = 0; str[i] != '\0'; i++) {
+        for (j = 0; str[i] != ALPHABET[j]; j++);
+        printf("        DEFAULT_CODE[%i] = 0x%x\n", j, DEFAULT_CODE[j]);
+        temp[i] = DEFAULT_CODE[j];
     }
 
     if (i % 3 == 2)
@@ -75,6 +50,7 @@ int *make_triplets(char str[], char key[]) {
         triplets[k] = temp[start]*FOUR_TENS + temp[start+1]*TWO_TENS + temp[start+2];
         k++;
     }
+    
     return triplets;
 }
 
