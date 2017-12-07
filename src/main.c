@@ -113,13 +113,13 @@ static void activate(GtkApplication* app, gpointer user_data) {
 
     gui.window = gtk_application_window_new(app);
     gtk_window_set_title(GTK_WINDOW(gui.window), "Colta");
+	gtk_container_set_border_width(GTK_CONTAINER(gui.window), 5);
 
-    gui.box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 3);
+    gui.box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 5);
     gtk_container_add(GTK_CONTAINER(gui.window), gui.box);
 
     gui.plaintext = gtk_entry_new();
     gtk_entry_set_placeholder_text(GTK_ENTRY(gui.plaintext), "Text (a-z .,!?, 120 characters maximum)");
-    gtk_entry_set_max_length(GTK_ENTRY(gui.plaintext), 120);
     gtk_box_pack_start(GTK_BOX(gui.box), gui.plaintext, 1, 1, 0);
 
     gui.button_box = gtk_button_box_new(GTK_ORIENTATION_HORIZONTAL);
@@ -129,7 +129,8 @@ static void activate(GtkApplication* app, gpointer user_data) {
     gtk_container_add(GTK_CONTAINER(gui.button_box), gui.button);
 
     gui.output_grid = gtk_grid_new();
-    gtk_grid_set_column_spacing(GTK_GRID(gui.grid), 2);
+    gtk_grid_set_column_spacing(GTK_GRID(gui.output_grid), 0);
+    gtk_grid_set_row_spacing(GTK_GRID(gui.output_grid), 0);
     gtk_grid_set_column_homogeneous(GTK_GRID(gui.output_grid), 1);
     gtk_grid_set_row_homogeneous(GTK_GRID(gui.output_grid), 1);
     for (i=0; i<CELLS; i++) {
